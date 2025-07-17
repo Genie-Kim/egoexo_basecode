@@ -82,9 +82,58 @@
                 "CUDA_VISIBLE_DEVICES": "0"
             },
             "justMyCode": true
+        },
+        {
+            "name": "XMem EgoExo Training: Multi GPU",
+            "type": "python",
+            "request": "launch",
+            "module": "torch.distributed.launch",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/correspondence/XMem",
+            "args": [
+                "--master_port", "25763",
+                "--nproc_per_node", "4",
+                "--use_env", "true",
+                "${workspaceFolder}/correspondence/XMem/train.py",
+                "--exp_id", "xmem_egoexo_tune",
+                "--stage", "3",
+                "--load_network", "pretrained/XMem.pth",
+                "--egoexo_root", "/path/to/data",
+                "--save_network_interval", "1000",
+                "--save_checkpoint_interval", "2000",
+                // "--enable_segswap", // with XsegTX
+                // "--segswap_model", "/path/to/xSeg-Tx/checkpoint.pth", // with XsegTX
+                // "--swap" // training exo->ego
+            ],
+            "gevent": true,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0,1,2,3"
+            },
+            "justMyCode": true
+        },
+        {
+            "name": "XMem EgoExo Training: Single GPU",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/correspondence/XMem/train.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/correspondence/XMem",
+            "args": [
+                "--exp_id", "xmem_egoexo_tune",
+                "--stage", "3",
+                "--load_network", "pretrained/XMem.pth",
+                "--egoexo_root", "/path/to/data",
+                "--save_network_interval", "1000",
+                "--save_checkpoint_interval", "2000",
+                // "--enable_segswap", // with XsegTX
+                // "--segswap_model", "/path/to/xSeg-Tx/checkpoint.pth", // with XsegTX
+                // "--swap" // training exo->ego
+            ],
+            "gevent": true,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "justMyCode": true
         }
     ]
 }
-
-
-

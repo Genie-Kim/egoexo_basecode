@@ -4,6 +4,9 @@ pretrained_models/
 checkpoints/
 *.zip
 
+.vscode/
+CLAUDE.md
+
 .vim-arsync
 *.pyc
 
