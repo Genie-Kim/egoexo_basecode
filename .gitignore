@@ -1,3 +1,9 @@
+*.pth*
+egoexo_v2_final/
+pretrained_models/
+checkpoints/
+*.zip
+
 .vim-arsync
 *.pyc
 

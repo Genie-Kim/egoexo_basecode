@@ -1,0 +1,90 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "SegSwap Train: Exo to Ego",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/correspondence/SegSwap/train/Main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/correspondence/SegSwap",
+            "args": [
+                "--train-dir", "../egoexo_v2_final/data/",
+                "--batch-pos", "32",
+                "--batch-neg", "15",
+                "--out-dir", "checkpoints/egoexo_v2_480x480_reverse",
+                "--n-epoch", "250",
+                "--reverse"
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "justMyCode": true
+        },
+        {
+            "name": "SegSwap Train: Ego to Exo",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/correspondence/SegSwap/train/Main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/correspondence/SegSwap/train",
+            "args": [
+                "--train-dir", "../egoexo_v2_final/data/",
+                "--batch-pos", "32",
+                "--batch-neg", "15",
+                "--out-dir", "checkpoints/egoexo_v2_480x480",
+                "--n-epoch", "250"
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "justMyCode": true
+        },
+        {
+            "name": "SegSwap Eval: Ego to Exo",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/correspondence/SegSwap/eval_segswap.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/correspondence/SegSwap",
+            "args": [
+                "--ckpt_path", "pretrained_models/XSegTx/egoexo/model.pth",
+                "--data_path", "/hddsdb/segswap/trainval",
+                "--splits_path", "/hddsdb/segswap/trainval/split.json",
+                "--split", "val",
+                "--out_path", "output/egoexo_inference",
+                "--setting", "ego-exo"
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "justMyCode": true
+        },
+        {
+            "name": "SegSwap Eval: Exo to Ego",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/correspondence/SegSwap/eval_segswap.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/correspondence/SegSwap",
+            "args": [
+                "--ckpt_path", "pretrained_models/XSegTx/exoego/model.pth",
+                "--data_path", "/hddsdb/segswap/trainval",
+                "--splits_path", "/hddsdb/segswap/trainval/split.json",
+                "--split", "val",
+                "--out_path", "output/exoego_inference",
+                "--setting", "exo-ego"
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "justMyCode": true
+        }
+    ]
+}
+
+
+
