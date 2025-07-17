@@ -8,12 +8,13 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, ConcatDataset
 import torch.distributed as distributed
+from tqdm import tqdm
 
 from model.trainer import XMemTrainer
 from dataset.static_dataset import StaticTransformDataset
 from dataset.vos_dataset import VOSDataset
 
-from util.logger import TensorboardLogger
+from util.logger import WandbLogger
 from util.configuration import Configuration
 from util.load_subset import load_sub_davis, load_sub_yv
 
@@ -91,7 +92,7 @@ for si, stage in enumerate(stages_to_perform):
             )
         else:
             long_id = None
-        logger = TensorboardLogger(config["exp_id"], long_id, git_info)
+        logger = WandbLogger(config["exp_id"], long_id, git_info, config)
         logger.log_string("hyperpara", str(config))
 
         # Construct the rank 0 model
@@ -203,6 +204,28 @@ for si, stage in enumerate(stages_to_perform):
         print(f"Renewed with {max_skip=}")
 
         return construct_loader(train_dataset)
+    
+    def create_egoexo_val_loader(max_skip=5, ego_cam_name="aria", swap=False):
+        """Create validation loader for EgoExo dataset"""
+        # Use a subset of the training data for validation or implement proper val split
+        val_dataset = VOSDataset(
+            egoexo_root,
+            ego_cam_name,
+            max_skip // 5,
+            is_bl=False,
+            subset=None,
+            num_frames=config["num_frames"],
+            finetune=False,
+            swap=swap
+        )
+        
+        # Use only a small subset for validation to save time
+        val_size = min(len(val_dataset) // 10, 50)  # 10% of data or max 50 samples
+        val_indices = torch.randperm(len(val_dataset))[:val_size]
+        val_subset = torch.utils.data.Subset(val_dataset, val_indices)
+        
+        val_sampler, val_loader = construct_loader(val_subset)
+        return val_sampler, val_loader
 
     def renew_bl_loader(max_skip, finetune=False):
         train_dataset = VOSDataset(
@@ -260,6 +283,10 @@ for si, stage in enumerate(stages_to_perform):
         egoexo_root = config["egoexo_root"]
         train_sampler, train_loader = renew_egoexo_loader(5, swap=config['swap'])
         renew_loader = renew_egoexo_loader
+        
+        # Create validation loader for EgoExo
+        val_sampler, val_loader = create_egoexo_val_loader(5, swap=config['swap'])
+        validation_interval = 500  # Run validation every 500 iterations
     else:
         # stage 2 or 3
         increase_skip_fraction = [0.1, 0.3, 0.9, 100]
@@ -294,6 +321,12 @@ for si, stage in enumerate(stages_to_perform):
     # Need this to select random bases in different workers
     np.random.seed(np.random.randint(2**30 - 1) + local_rank * 100)
     try:
+        # Create progress bar for total iterations
+        if local_rank == 0:
+            pbar = tqdm(total=config["iterations"] + config["finetune"], 
+                       desc=f"Stage {stage} Training", 
+                       initial=total_iter)
+        
         while total_iter < config["iterations"] + config["finetune"]:
             # Crucial for randomness!
             train_sampler.set_epoch(current_epoch)
@@ -327,9 +360,27 @@ for si, stage in enumerate(stages_to_perform):
                 model.do_pass(data, total_iter, tmp_i == len(train_loader) - 1)
                 total_iter += 1
 
+                # Update progress bar
+                if local_rank == 0:
+                    pbar.update(1)
+                    # Update progress bar description with current loss info
+                    pbar.set_postfix({
+                        'iter': total_iter,
+                        'epoch': current_epoch,
+                        'stage': stage
+                    })
+
+                # Run validation periodically for stage 3 (EgoExo)
+                if (stage == "3" and total_iter % validation_interval == 0 and 
+                    total_iter > 0 and local_rank == 0):
+                    print(f"Running validation at iteration {total_iter}")
+                    model.validate(val_loader, total_iter)
+
                 if total_iter >= config["iterations"] + config["finetune"]:
                     break
     finally:
+        if local_rank == 0:
+            pbar.close()
         if not config["debug"] and model.logger is not None and total_iter > 5000:
             model.save_network(total_iter)
             model.save_checkpoint(total_iter)

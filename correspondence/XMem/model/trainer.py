@@ -44,6 +44,9 @@ class XMemTrainer:
         self.train_integrator = Integrator(
             self.logger, distributed=True, local_rank=local_rank, world_size=world_size
         )
+        self.val_integrator = Integrator(
+            self.logger, distributed=True, local_rank=local_rank, world_size=world_size
+        )
         self.loss_computer = LossComputer(config)
 
         self.train()
@@ -256,6 +259,23 @@ class XMemTrainer:
             self.optimizer.step()
 
         self.scheduler.step()
+    
+    def validate(self, val_loader, it):
+        """
+        Run validation on the provided validation dataset
+        """
+        self.val()
+        
+        with torch.no_grad():
+            for data in val_loader:
+                self.do_pass(data, it, do_logging=False)
+                
+        # Finalize validation metrics
+        self.val_integrator.finalize("val", it)
+        self.val_integrator.reset_except_hooks()
+        
+        # Return to training mode
+        self.train()
 
     def save_network(self, it):
         if self.save_path is None:
@@ -324,6 +344,7 @@ class XMemTrainer:
     def val(self):
         self._is_train = False
         self._do_log = True
+        self.integrator = self.val_integrator
         self.XMem.eval()
         return self
 
