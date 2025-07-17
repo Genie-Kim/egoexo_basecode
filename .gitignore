@@ -3,6 +3,8 @@ egoexo_v2_final/
 pretrained_models/
 checkpoints/
 *.zip
+wandb/
+
 
 .vscode/
 CLAUDE.md
