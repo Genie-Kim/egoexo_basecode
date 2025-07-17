@@ -92,7 +92,7 @@ class XMemTrainer:
 
         with torch.cuda.amp.autocast(enabled=self.config["amp"]):
             # image features never change, compute once
-            encoded_results, mx, my = self.XMem(
+            encoded_results, mx, my, out_cls = self.XMem(
                 "encode_key", ego_frames, ego_cls_gt, frames
             )
 

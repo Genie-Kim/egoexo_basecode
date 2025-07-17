@@ -1,7 +1,7 @@
 import datetime
 from os import path
 import math
-import git
+# import git
 
 import random
 import numpy as np
@@ -22,7 +22,16 @@ from util.load_subset import load_sub_davis, load_sub_yv
 Initial setup
 """
 # Init distributed environment
-distributed.init_process_group(backend="nccl")
+import os
+if 'RANK' in os.environ:
+    # Multi-GPU training
+    distributed.init_process_group(backend="nccl")
+    local_rank = torch.distributed.get_rank()
+    world_size = torch.distributed.get_world_size()
+else:
+    # Single GPU training
+    local_rank = 0
+    world_size = 1
 print(f"CUDA Device count: {torch.cuda.device_count()}")
 
 # Parse command line arguments
@@ -33,11 +42,10 @@ if raw_config["benchmark"]:
     torch.backends.cudnn.benchmark = True
 
 # Get current git info
-repo = git.Repo(".")
-git_info = str(repo.active_branch) + " " + str(repo.head.commit.hexsha)
+# repo = git.Repo(".")
+# git_info = str(repo.active_branch) + " " + str(repo.head.commit.hexsha)
+git_info = "test"
 
-local_rank = torch.distributed.get_rank()
-world_size = torch.distributed.get_world_size()
 torch.cuda.set_device(local_rank)
 print(f"I am rank {local_rank} in this world of size {world_size}!")
 
@@ -130,13 +138,20 @@ for si, stage in enumerate(stages_to_perform):
         random.seed(worker_seed)
 
     def construct_loader(dataset):
-        train_sampler = torch.utils.data.distributed.DistributedSampler(
-            dataset, rank=local_rank, shuffle=True
-        )
+        if world_size > 1:
+            train_sampler = torch.utils.data.distributed.DistributedSampler(
+                dataset, rank=local_rank, shuffle=True
+            )
+            shuffle = False
+        else:
+            train_sampler = None
+            shuffle = True
+        
         train_loader = DataLoader(
             dataset,
             config["batch_size"],
             sampler=train_sampler,
+            shuffle=shuffle,
             num_workers=config["num_workers"],
             worker_init_fn=worker_init_fn,
             drop_last=True,

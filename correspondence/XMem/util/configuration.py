@@ -60,7 +60,7 @@ class Configuration:
         Batch sizes are effective -- you don't have to scale them when you scale the number processes
         """
         # Stage 0, static images
-        parser.add_argument("--s0_batch_size", default=16, type=int)
+        parser.add_argument("--s0_batch_size", default=12, type=int)
         parser.add_argument("--s0_iterations", default=150000, type=int)
         parser.add_argument("--s0_finetune", default=0, type=int)
         parser.add_argument("--s0_steps", nargs="*", default=[], type=int)
@@ -73,7 +73,7 @@ class Configuration:
         parser.add_argument("--s0_end_warm", default=70000, type=int)
 
         # Stage 1, BL30K
-        parser.add_argument("--s1_batch_size", default=8, type=int)
+        parser.add_argument("--s1_batch_size", default=6, type=int)
         parser.add_argument("--s1_iterations", default=250000, type=int)
         # fine-tune means fewer augmentations to train the sensory memory
         parser.add_argument("--s1_finetune", default=0, type=int)
@@ -87,7 +87,7 @@ class Configuration:
         parser.add_argument("--s1_end_warm", default=70000, type=int)
 
         # Stage 2, DAVIS+YoutubeVOS, longer
-        parser.add_argument("--s2_batch_size", default=8, type=int)
+        parser.add_argument("--s2_batch_size", default=6, type=int)
         parser.add_argument("--s2_iterations", default=150000, type=int)
         # fine-tune means fewer augmentations to train the sensory memory
         parser.add_argument("--s2_finetune", default=10000, type=int)
@@ -101,11 +101,11 @@ class Configuration:
         parser.add_argument("--s2_end_warm", default=70000, type=int)
 
         # Stage 3, DAVIS+YoutubeVOS, shorter
-        parser.add_argument("--s3_batch_size", default=8, type=int)
+        parser.add_argument("--s3_batch_size", default=6, type=int)
         parser.add_argument("--s3_iterations", default=100000, type=int)
         # fine-tune means fewer augmentations to train the sensory memory
         parser.add_argument("--s3_finetune", default=10000, type=int)
-        parser.add_argument("---", nargs="*", default=[80000], type=int)
+        parser.add_argument("--s3_steps", nargs="*", default=[80000], type=int)
         parser.add_argument(
             "--s3_lr", help="Initial learning rate", default=1e-5, type=float
         )

@@ -121,10 +121,10 @@ class XMem(nn.Module):
                 "f4": f4,
             }
 
-        if need_reshape:
-            mx = mx.view(b, t, *mx.shape[-3:])
-            my = my.view(b, t, *my.shape[-3:])
         if self.enable_segswap:
+            if need_reshape:
+                mx = mx.view(b, t, *mx.shape[-3:])
+                my = my.view(b, t, *my.shape[-3:])
             return out, mx, my, out_cls
         else:
             return out, None, None, -1
