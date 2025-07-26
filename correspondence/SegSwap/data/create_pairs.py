@@ -70,6 +70,8 @@ if __name__ == '__main__':
 
     make_pairs(args.data_dir, 'train', 'egoexo')
     make_pairs(args.data_dir, 'val', 'egoexo')
+    make_pairs(args.data_dir, 'test', 'egoexo')
 
     make_pairs(args.data_dir, 'train', 'exoego')
     make_pairs(args.data_dir, 'val', 'exoego')
+    make_pairs(args.data_dir, 'test', 'exoego')
